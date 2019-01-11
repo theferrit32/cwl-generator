@@ -164,6 +164,14 @@ class RandomWorkflowGenerator(object):
 
 def main(argv):
     parser = argparse.ArgumentParser(description="Generate a random workflow for testing purposes")
+    format_group = parser.add_mutually_exclusive_group(required=False)
+    format_group.add_argument("--yaml", default=False, action="store_true", help="Output workflow in YAML (default)")
+    format_group.add_argument("--json", default=False, action="store_true", help="Output workflow in JSON")
+
+    opts = parser.parse_args(argv)
+    if not opts.yaml and not opts.json:
+        opts.yaml = True
+
     #dagGenerator = RandomDAGGenerator(10, 20, 0.5, 0.5, seed=1)
     wfGenerator = RandomWorkflowGenerator(
             10, 20,
@@ -174,14 +182,17 @@ def main(argv):
             seed=2)
 
     wf = wfGenerator.generate()
-    wf_yaml = yaml.dump(wf, default_flow_style=False)
-    wf_json = json.dumps(wf, indent=2)
+    
+    if opts.yaml:
+        wf_string = yaml.dump(wf, default_flow_style=False)
+    elif opts.json:
+        wf_string = json.dumps(wf, indent=2) # match default yaml indent of 2 spaces
     #print(wf_json)
     filename = wf["id"] + ".cwl"
     with open(filename, "w") as f:
         logger.debug("writing output file: {0}".format(filename))
-        f.write(wf_yaml)
+        f.write(wf_string)
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv[1:]))
